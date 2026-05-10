@@ -6,10 +6,11 @@ on:
     - cron: '0 9 * * *'    # 11:00 Sofia — Partner news
     - cron: '0 12 * * *'   # 14:00 Sofia — ITA COM post
     - cron: '0 16 * * *'   # 18:00 Sofia — Partner news
+    - cron: '*/30 * * * *' # Every 30 min — check & reply to comments
   workflow_dispatch:
     inputs:
       post_type:
-        description: 'What to post: itacom or partner'
+        description: 'What to post: itacom, partner, or comments'
         required: false
         default: 'itacom'
 
@@ -42,13 +43,20 @@ jobs:
         id: type
         run: |
           HOUR=$(date -u +%H)
+          MIN=$(date -u +%M)
           INPUT="${{ github.event.inputs.post_type }}"
           if [ -n "$INPUT" ]; then
             echo "type=$INPUT" >> $GITHUB_OUTPUT
-          elif [ "$HOUR" = "09" ] || [ "$HOUR" = "16" ]; then
+          elif [ "$HOUR" = "06" ] && [ "$MIN" -lt "15" ]; then
+            echo "type=itacom" >> $GITHUB_OUTPUT
+          elif [ "$HOUR" = "09" ] && [ "$MIN" -lt "15" ]; then
+            echo "type=partner" >> $GITHUB_OUTPUT
+          elif [ "$HOUR" = "12" ] && [ "$MIN" -lt "15" ]; then
+            echo "type=itacom" >> $GITHUB_OUTPUT
+          elif [ "$HOUR" = "16" ] && [ "$MIN" -lt "15" ]; then
             echo "type=partner" >> $GITHUB_OUTPUT
           else
-            echo "type=itacom" >> $GITHUB_OUTPUT
+            echo "type=comments" >> $GITHUB_OUTPUT
           fi
 
       - name: Post ITA COM content
@@ -66,3 +74,10 @@ jobs:
           PAGE_ACCESS_TOKEN: ${{ secrets.PAGE_ACCESS_TOKEN }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
         run: python partner_bot.py
+
+      - name: Reply to comments
+        if: steps.type.outputs.type == 'comments'
+        env:
+          PAGE_ID: ${{ secrets.PAGE_ID }}
+          PAGE_ACCESS_TOKEN: ${{ secrets.PAGE_ACCESS_TOKEN }}
+        run: python comment_bot.py
