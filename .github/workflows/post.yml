@@ -1,0 +1,34 @@
+name: Facebook Auto Post
+
+on:
+  schedule:
+    - cron: '0 7 * * *'   # 9:00 Sofia (UTC+2 winter)
+    - cron: '0 16 * * *'  # 18:00 Sofia (UTC+2 winter)
+  workflow_dispatch:       # allows manual trigger from GitHub UI
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Download font
+        run: |
+          curl -fL "https://github.com/dejavu-fonts/dejavu-fonts/releases/download/version_2_37/dejavu-fonts-ttf-2.37.tar.bz2" -o dejavu.tar.bz2
+          tar -xjf dejavu.tar.bz2 dejavu-fonts-ttf-2.37/ttf/DejaVuSans-Bold.ttf
+          mv dejavu-fonts-ttf-2.37/ttf/DejaVuSans-Bold.ttf .
+
+      - name: Post to Facebook
+        env:
+          PAGE_ID: ${{ secrets.PAGE_ID }}
+          PAGE_ACCESS_TOKEN: ${{ secrets.PAGE_ACCESS_TOKEN }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+        run: python bot.py
