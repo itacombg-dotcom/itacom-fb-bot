@@ -2,15 +2,27 @@ name: Facebook Auto Post
 
 on:
   schedule:
-    - cron: '0 7 * * *'   # 9:00 Sofia (UTC+2 winter)
-    - cron: '0 16 * * *'  # 18:00 Sofia (UTC+2 winter)
-  workflow_dispatch:       # allows manual trigger from GitHub UI
+    - cron: '0 6 * * *'    # 08:00 Sofia — ITA COM post
+    - cron: '0 9 * * *'    # 11:00 Sofia — Partner news
+    - cron: '0 12 * * *'   # 14:00 Sofia — ITA COM post
+    - cron: '0 16 * * *'   # 18:00 Sofia — Partner news
+  workflow_dispatch:
+    inputs:
+      post_type:
+        description: 'What to post: itacom or partner'
+        required: false
+        default: 'itacom'
+
+permissions:
+  contents: write
 
 jobs:
   post:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -26,9 +38,31 @@ jobs:
           tar -xjf dejavu.tar.bz2 dejavu-fonts-ttf-2.37/ttf/DejaVuSans-Bold.ttf
           mv dejavu-fonts-ttf-2.37/ttf/DejaVuSans-Bold.ttf .
 
-      - name: Post to Facebook
+      - name: Determine post type
+        id: type
+        run: |
+          HOUR=$(date -u +%H)
+          INPUT="${{ github.event.inputs.post_type }}"
+          if [ -n "$INPUT" ]; then
+            echo "type=$INPUT" >> $GITHUB_OUTPUT
+          elif [ "$HOUR" = "09" ] || [ "$HOUR" = "16" ]; then
+            echo "type=partner" >> $GITHUB_OUTPUT
+          else
+            echo "type=itacom" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Post ITA COM content
+        if: steps.type.outputs.type == 'itacom'
         env:
           PAGE_ID: ${{ secrets.PAGE_ID }}
           PAGE_ACCESS_TOKEN: ${{ secrets.PAGE_ACCESS_TOKEN }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
         run: python bot.py
+
+      - name: Post partner news
+        if: steps.type.outputs.type == 'partner'
+        env:
+          PAGE_ID: ${{ secrets.PAGE_ID }}
+          PAGE_ACCESS_TOKEN: ${{ secrets.PAGE_ACCESS_TOKEN }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+        run: python partner_bot.py
