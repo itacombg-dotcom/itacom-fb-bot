@@ -124,17 +124,32 @@ def load_replied():
         return set(line.strip() for line in f if line.strip())
 
 
-def save_replied(comment_id):
+def save_replied_batch(new_ids):
+    if not new_ids:
+        return
     with open(REPLIED_FILE, "a") as f:
-        f.write(comment_id + "\n")
+        for cid in new_ids:
+            f.write(cid + "\n")
     try:
         subprocess.run(["git", "config", "user.email", "bot@itacom.bg"], check=False)
         subprocess.run(["git", "config", "user.name", "ITA COM Bot"], check=False)
         subprocess.run(["git", "add", REPLIED_FILE], check=False)
-        subprocess.run(["git", "commit", "-m", f"Track replied comment {comment_id}"], check=False)
+        subprocess.run(["git", "commit", "-m", f"Track {len(new_ids)} replied comment(s)"], check=False)
         subprocess.run(["git", "push"], check=False)
     except Exception as e:
         print(f"Git commit warning: {e}")
+
+
+def validate_token():
+    resp = requests.get(
+        f"https://graph.facebook.com/v25.0/{PAGE_ID}",
+        params={"fields": "id,name", "access_token": PAGE_ACCESS_TOKEN},
+    )
+    data = resp.json()
+    if "error" in data:
+        print(f"ERROR: Facebook token invalid or missing permissions: {data['error']}")
+        sys.exit(1)
+    print(f"Token OK — page: {data.get('name', PAGE_ID)}")
 
 
 def get_recent_posts(limit=10):
@@ -183,13 +198,20 @@ def post_reply(comment_id, reply_text):
 def main():
     test_mode = "--test" in sys.argv
 
+    if not PAGE_ID or not PAGE_ACCESS_TOKEN:
+        print("ERROR: PAGE_ID or PAGE_ACCESS_TOKEN not set.")
+        sys.exit(1)
+
+    if not test_mode:
+        validate_token()
+
     replied = load_replied()
     print(f"Already replied to {len(replied)} comments.")
 
     posts = get_recent_posts(limit=10)
     print(f"Checking {len(posts)} recent posts for new comments...")
 
-    new_replies = 0
+    new_ids = []
     for post in posts:
         post_id  = post["id"]
         comments = get_comments(post_id)
@@ -213,14 +235,17 @@ def main():
 
             if test_mode:
                 replied.add(cid)
+                new_ids.append(cid)
             else:
                 success = post_reply(cid, reply)
                 if success:
-                    save_replied(cid)
                     replied.add(cid)
-                    new_replies += 1
+                    new_ids.append(cid)
 
-    print(f"\nDone. {new_replies} new replies posted.")
+    if not test_mode:
+        save_replied_batch(new_ids)
+
+    print(f"\nDone. {len(new_ids)} new replies posted.")
 
 
 if __name__ == "__main__":
