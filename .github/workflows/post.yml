@@ -42,18 +42,17 @@ jobs:
       - name: Determine post type
         id: type
         run: |
-          HOUR=$(date -u +%H)
-          MIN=$(date -u +%M)
           INPUT="${{ github.event.inputs.post_type }}"
+          SCHEDULE="${{ github.event.schedule }}"
           if [ -n "$INPUT" ]; then
             echo "type=$INPUT" >> $GITHUB_OUTPUT
-          elif [ "$HOUR" = "06" ] && [ "$MIN" -lt "15" ]; then
+          elif [ "$SCHEDULE" = "0 6 * * *" ]; then
             echo "type=itacom" >> $GITHUB_OUTPUT
-          elif [ "$HOUR" = "09" ] && [ "$MIN" -lt "15" ]; then
+          elif [ "$SCHEDULE" = "0 9 * * *" ]; then
             echo "type=partner" >> $GITHUB_OUTPUT
-          elif [ "$HOUR" = "12" ] && [ "$MIN" -lt "15" ]; then
+          elif [ "$SCHEDULE" = "0 12 * * *" ]; then
             echo "type=itacom" >> $GITHUB_OUTPUT
-          elif [ "$HOUR" = "16" ] && [ "$MIN" -lt "15" ]; then
+          elif [ "$SCHEDULE" = "0 16 * * *" ]; then
             echo "type=partner" >> $GITHUB_OUTPUT
           else
             echo "type=comments" >> $GITHUB_OUTPUT
