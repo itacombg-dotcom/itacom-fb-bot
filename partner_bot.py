@@ -164,7 +164,7 @@ def post_to_facebook(img, caption):
         return True
     else:
         print(f"Post failed: {result}")
-        return False
+        sys.exit(1)
 
 
 def main():

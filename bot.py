@@ -168,6 +168,7 @@ def post_to_facebook(image_text, caption, image_query):
         print(f"Posted successfully! ID: {result['id']}")
     else:
         print(f"Post failed: {result}")
+        sys.exit(1)
 
 
 def main():
