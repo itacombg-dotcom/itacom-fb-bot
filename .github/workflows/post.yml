@@ -39,6 +39,15 @@ jobs:
           tar -xjf dejavu.tar.bz2 dejavu-fonts-ttf-2.37/ttf/DejaVuSans-Bold.ttf
           mv dejavu-fonts-ttf-2.37/ttf/DejaVuSans-Bold.ttf .
 
+      - name: Refresh page token
+        id: token
+        env:
+          SYSTEM_USER_TOKEN: ${{ secrets.SYSTEM_USER_TOKEN }}
+          PAGE_ID: ${{ secrets.PAGE_ID }}
+        run: |
+          PAGE_TOKEN=$(python get_page_token.py)
+          echo "page_token=$PAGE_TOKEN" >> $GITHUB_OUTPUT
+
       - name: Determine post type
         id: type
         run: |
@@ -62,7 +71,7 @@ jobs:
         if: steps.type.outputs.type == 'itacom'
         env:
           PAGE_ID: ${{ secrets.PAGE_ID }}
-          PAGE_ACCESS_TOKEN: ${{ secrets.PAGE_ACCESS_TOKEN }}
+          PAGE_ACCESS_TOKEN: ${{ steps.token.outputs.page_token }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
         run: python bot.py
 
@@ -70,7 +79,7 @@ jobs:
         if: steps.type.outputs.type == 'partner'
         env:
           PAGE_ID: ${{ secrets.PAGE_ID }}
-          PAGE_ACCESS_TOKEN: ${{ secrets.PAGE_ACCESS_TOKEN }}
+          PAGE_ACCESS_TOKEN: ${{ steps.token.outputs.page_token }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
         run: python partner_bot.py
 
@@ -78,5 +87,5 @@ jobs:
         if: steps.type.outputs.type == 'comments'
         env:
           PAGE_ID: ${{ secrets.PAGE_ID }}
-          PAGE_ACCESS_TOKEN: ${{ secrets.PAGE_ACCESS_TOKEN }}
+          PAGE_ACCESS_TOKEN: ${{ steps.token.outputs.page_token }}
         run: python comment_bot.py
