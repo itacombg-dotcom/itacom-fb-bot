@@ -154,11 +154,28 @@ def post_to_facebook(img, caption):
     buffer = BytesIO()
     img.save(buffer, format="JPEG", quality=92)
     buffer.seek(0)
-    url = f"https://graph.facebook.com/v25.0/{PAGE_ID}/photos"
-    resp = requests.post(url,
-        data={"caption": caption, "access_token": PAGE_ACCESS_TOKEN},
-        files={"source": ("post.jpg", buffer, "image/jpeg")})
-    result = resp.json()
+    # Step 1: Upload photo as unpublished
+    upload_resp = requests.post(
+        f"https://graph.facebook.com/v25.0/{PAGE_ID}/photos",
+        data={"published": "false", "access_token": PAGE_ACCESS_TOKEN},
+        files={"source": ("post.jpg", buffer, "image/jpeg")},
+    )
+    upload_result = upload_resp.json()
+    if "id" not in upload_result:
+        print(f"Photo upload failed: {upload_result}")
+        sys.exit(1)
+    photo_id = upload_result["id"]
+
+    # Step 2: Publish as a proper feed post (counts as a Publication in Insights)
+    post_resp = requests.post(
+        f"https://graph.facebook.com/v25.0/{PAGE_ID}/feed",
+        data={
+            "message": caption,
+            "attached_media": f'[{{"media_fbid":"{photo_id}"}}]',
+            "access_token": PAGE_ACCESS_TOKEN,
+        },
+    )
+    result = post_resp.json()
     if "id" in result:
         print(f"Posted successfully! ID: {result['id']}")
         return True
