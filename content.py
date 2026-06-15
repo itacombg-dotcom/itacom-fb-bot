@@ -91,7 +91,7 @@ POSTS = [
             "📞 0888 993 204 | itacom@abv.bg\n\n"
             "#Спестявания #Отопление #ИТА_КОМ #Ефективност"
         ),
-        "image_query": "energy saving home warmth winter"
+        "image_query": "radiator heating warm house pipes"
     },
     {
         "image_text": "Строителни дейности към топлофикационни системи",
@@ -101,7 +101,7 @@ POSTS = [
             "📞 0888 993 204\n\n"
             "#Строителство #Топлофикация #ИТА_КОМ #ПълноРешение"
         ),
-        "image_query": "construction workers building infrastructure"
+        "image_query": "underground pipes construction heating trench"
     },
     {
         "image_text": "Работим с водещи световни производители",
@@ -111,7 +111,7 @@ POSTS = [
             "📞 0888 993 204 | itacom@abv.bg\n\n"
             "#Качество #Партньорство #ИТА_КОМ #Технологии"
         ),
-        "image_query": "technology engineering partnership business"
+        "image_query": "industrial valves pipes manufacturing factory"
     },
     {
         "image_text": "Соларна енергия + топлофикация = идеалната комбинация",
@@ -131,7 +131,7 @@ POSTS = [
             "📞 0888 993 204 | itacom@abv.bg\n\n"
             "#Експерти #ИТА_КОМ #Инженеринг #Топлофикация"
         ),
-        "image_query": "engineers team working professional"
+        "image_query": "engineer technician industrial pipes maintenance"
     },
     {
         "image_text": "Защо да изберете ИТА КОМ?",
@@ -145,7 +145,7 @@ POSTS = [
             "🌐 itacom.bg\n\n"
             "#ИТА_КОМ #Топлофикация #СоларнаЕнергия #Надеждност"
         ),
-        "image_query": "professional energy company office"
+        "image_query": "heating energy plant boiler industrial building"
     },
     {
         "image_text": "Нови технологии в топлоенергетиката",
@@ -155,6 +155,6 @@ POSTS = [
             "📞 0888 993 204\n\n"
             "#НовиТехнологии #Автоматика #ИТА_КОМ #Иновации"
         ),
-        "image_query": "smart technology energy innovation future"
+        "image_query": "automation control panel industrial energy system"
     },
 ]

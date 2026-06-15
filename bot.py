@@ -37,6 +37,17 @@ def load_font(size):
     return ImageFont.load_default()
 
 
+# Safe fallback queries — guaranteed to return heating/energy related images
+SAFE_FALLBACK_QUERIES = [
+    "district heating pipes",
+    "solar panels rooftop installation",
+    "industrial boiler room pipes",
+    "heating system radiator pipes",
+    "photovoltaic solar energy panels",
+    "industrial energy plant machinery",
+]
+
+
 def get_pexels_image(query):
     headers = {"Authorization": PEXELS_API_KEY}
     resp = requests.get(
@@ -44,14 +55,15 @@ def get_pexels_image(query):
         headers=headers,
         params={"query": query, "per_page": 15, "orientation": "square"},
     )
-    data = resp.json()
-    photos = data.get("photos", [])
-    if not photos:
-        # Fallback to a broader search
+    photos = resp.json().get("photos", [])
+    if len(photos) < 3:
+        # Too few results — use a safe domain-specific fallback
+        fallback = random.choice(SAFE_FALLBACK_QUERIES)
+        print(f"  Low results for '{query}', using fallback: '{fallback}'")
         resp = requests.get(
             "https://api.pexels.com/v1/search",
             headers=headers,
-            params={"query": "energy technology", "per_page": 15, "orientation": "square"},
+            params={"query": fallback, "per_page": 15, "orientation": "square"},
         )
         photos = resp.json().get("photos", [])
     photo = random.choice(photos)
