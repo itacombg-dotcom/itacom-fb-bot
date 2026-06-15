@@ -159,34 +159,95 @@ def add_text_overlay(img, text):
     return img
 
 
+def create_brand_card():
+    """Creates a branded ITA COM contact card as the second image in every post.
+    This ensures every post is an album (2 photos) which Facebook counts as a Publication."""
+    w, h = 1080, 1080
+    img = Image.new("RGB", (w, h), BRAND_BLUE_DARK)
+    draw = ImageDraw.Draw(img)
+
+    # Subtle grid pattern
+    for i in range(0, w, 60):
+        draw.line([(i, 0), (i, h)], fill=(0, 40, 120), width=1)
+    for i in range(0, h, 60):
+        draw.line([(0, i), (w, i)], fill=(0, 40, 120), width=1)
+
+    # Logo centered top
+    if os.path.exists(LOGO_PATH):
+        logo = Image.open(LOGO_PATH).convert("RGBA")
+        logo_w = 380
+        logo_h = int(logo.height * (logo_w / logo.width))
+        logo = logo.resize((logo_w, logo_h), Image.LANCZOS)
+        pad = 16
+        bg = Image.new("RGBA", (logo_w + pad*2, logo_h + pad*2), (255, 255, 255, 230))
+        img.paste(bg, ((w - logo_w) // 2 - pad, 160 - pad), bg)
+        img.paste(logo, ((w - logo_w) // 2, 160), logo)
+
+    # Company name
+    font_lg = load_font(72)
+    font_md = load_font(48)
+    font_sm = load_font(38)
+
+    def centered(text, font, y, color="white"):
+        bbox = draw.textbbox((0, 0), text, font=font)
+        x = (w - (bbox[2] - bbox[0])) // 2
+        draw.text((x, y), text, font=font, fill=color)
+
+    centered("ИТА КОМ", font_lg, 420)
+    centered("Съвременни технологии в топлоенергетиката", font_sm, 520, (180, 210, 255))
+
+    # Divider
+    draw.rectangle([(140, 600), (940, 604)], fill=(100, 140, 255))
+
+    # Contact info
+    centered("📞  0888 993 204", font_md, 640)
+    centered("✉️  itacom@abv.bg", font_md, 710)
+    centered("🌐  itacom.bg", font_md, 780)
+    centered("📍  кв. Враждебна, ул. 3-та №16А, София", font_sm, 860, (180, 210, 255))
+
+    return img
+
+
+def upload_photo(img_bytes, filename="photo.jpg"):
+    """Upload a photo as unpublished and return its ID."""
+    resp = requests.post(
+        f"https://graph.facebook.com/v25.0/{PAGE_ID}/photos",
+        data={"published": "false", "access_token": PAGE_ACCESS_TOKEN},
+        files={"source": (filename, img_bytes, "image/jpeg")},
+    )
+    result = resp.json()
+    if "id" not in result:
+        print(f"Photo upload failed: {result}")
+        sys.exit(1)
+    return result["id"]
+
+
 def post_to_facebook(image_text, caption, image_query):
     print(f"Fetching image for: '{image_query}'")
     raw_img = get_pexels_image(image_query)
     img = crop_to_square(raw_img)
     img = add_text_overlay(img, image_text)
 
-    buffer = BytesIO()
-    img.save(buffer, format="JPEG", quality=92)
-    buffer.seek(0)
+    # Main image
+    buf1 = BytesIO()
+    img.save(buf1, format="JPEG", quality=92)
+    buf1.seek(0)
+    photo_id_1 = upload_photo(buf1, "main.jpg")
 
-    # Step 1: Upload photo as unpublished
-    upload_resp = requests.post(
-        f"https://graph.facebook.com/v25.0/{PAGE_ID}/photos",
-        data={"published": "false", "access_token": PAGE_ACCESS_TOKEN},
-        files={"source": ("post.jpg", buffer, "image/jpeg")},
-    )
-    upload_result = upload_resp.json()
-    if "id" not in upload_result:
-        print(f"Photo upload failed: {upload_result}")
-        sys.exit(1)
-    photo_id = upload_result["id"]
+    # Brand card (ensures post is album type = counted as Publication)
+    brand_card = create_brand_card()
+    buf2 = BytesIO()
+    brand_card.save(buf2, format="JPEG", quality=92)
+    buf2.seek(0)
+    photo_id_2 = upload_photo(buf2, "brand.jpg")
 
-    # Step 2: Publish as a proper feed post (counts as a Publication in Insights)
+    # Publish as album post (2 photos = counts as Publication in Facebook)
+    attached = f'[{{"media_fbid":"{photo_id_1}"}},{{"media_fbid":"{photo_id_2}"}}]'
     post_resp = requests.post(
         f"https://graph.facebook.com/v25.0/{PAGE_ID}/feed",
         data={
             "message": caption,
-            "attached_media": f'[{{"media_fbid":"{photo_id}"}}]',
+            "attached_media": attached,
             "access_token": PAGE_ACCESS_TOKEN,
         },
     )

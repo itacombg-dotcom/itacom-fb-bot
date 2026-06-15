@@ -151,27 +151,27 @@ def build_caption(company, bg_name, title, url):
 
 
 def post_to_facebook(img, caption):
-    buffer = BytesIO()
-    img.save(buffer, format="JPEG", quality=92)
-    buffer.seek(0)
-    # Step 1: Upload photo as unpublished
-    upload_resp = requests.post(
-        f"https://graph.facebook.com/v25.0/{PAGE_ID}/photos",
-        data={"published": "false", "access_token": PAGE_ACCESS_TOKEN},
-        files={"source": ("post.jpg", buffer, "image/jpeg")},
-    )
-    upload_result = upload_resp.json()
-    if "id" not in upload_result:
-        print(f"Photo upload failed: {upload_result}")
-        sys.exit(1)
-    photo_id = upload_result["id"]
+    from bot import create_brand_card, upload_photo
 
-    # Step 2: Publish as a proper feed post (counts as a Publication in Insights)
+    # Main partner image
+    buf1 = BytesIO()
+    img.save(buf1, format="JPEG", quality=92)
+    buf1.seek(0)
+    photo_id_1 = upload_photo(buf1, "partner.jpg")
+
+    # Brand card as second photo (makes it album type = counts as Publication)
+    brand_card = create_brand_card()
+    buf2 = BytesIO()
+    brand_card.save(buf2, format="JPEG", quality=92)
+    buf2.seek(0)
+    photo_id_2 = upload_photo(buf2, "brand.jpg")
+
+    attached = f'[{{"media_fbid":"{photo_id_1}"}},{{"media_fbid":"{photo_id_2}"}}]'
     post_resp = requests.post(
         f"https://graph.facebook.com/v25.0/{PAGE_ID}/feed",
         data={
             "message": caption,
-            "attached_media": f'[{{"media_fbid":"{photo_id}"}}]',
+            "attached_media": attached,
             "access_token": PAGE_ACCESS_TOKEN,
         },
     )
