@@ -2,15 +2,16 @@ name: Facebook Auto Post
 
 on:
   schedule:
-    - cron: '0 6 * * *'    # 08:00 Sofia — ITA COM post
-    - cron: '0 9 * * *'    # 11:00 Sofia — Partner news
-    - cron: '0 12 * * *'   # 14:00 Sofia — ITA COM post
-    - cron: '0 16 * * *'   # 18:00 Sofia — Partner news
-    - cron: '*/30 * * * *' # Every 30 min — check & reply to comments
+    - cron: '0 6 * * *'    # 08:00 Sofia ‚Äî ITA COM post
+    - cron: '0 7 * * *'    # 10:00 Sofia ‚Äî Instagram post
+    - cron: '0 9 * * *'    # 11:00 Sofia ‚Äî Partner news
+    - cron: '0 12 * * *'   # 14:00 Sofia ‚Äî ITA COM post
+    - cron: '0 16 * * *'   # 18:00 Sofia ‚Äî Partner news
+    - cron: '*/30 * * * *' # Every 30 min ‚Äî check & reply to comments
   workflow_dispatch:
     inputs:
       post_type:
-        description: 'What to post: itacom, partner, or comments'
+        description: 'What to post: itacom, partner, instagram, or comments'
         required: false
         default: 'itacom'
 
@@ -57,6 +58,8 @@ jobs:
             echo "type=$INPUT" >> $GITHUB_OUTPUT
           elif [ "$SCHEDULE" = "0 6 * * *" ]; then
             echo "type=itacom" >> $GITHUB_OUTPUT
+          elif [ "$SCHEDULE" = "0 7 * * *" ]; then
+            echo "type=instagram" >> $GITHUB_OUTPUT
           elif [ "$SCHEDULE" = "0 9 * * *" ]; then
             echo "type=partner" >> $GITHUB_OUTPUT
           elif [ "$SCHEDULE" = "0 12 * * *" ]; then
@@ -82,6 +85,14 @@ jobs:
           PAGE_ACCESS_TOKEN: ${{ steps.token.outputs.page_token }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
         run: python partner_bot.py
+
+      - name: Post to Instagram
+        if: steps.type.outputs.type == 'instagram'
+        env:
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          PAGE_ACCESS_TOKEN: ${{ steps.token.outputs.page_token }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+        run: python instagram_bot.py
 
       - name: Reply to comments
         if: steps.type.outputs.type == 'comments'
