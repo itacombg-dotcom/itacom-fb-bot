@@ -2,12 +2,13 @@ name: Facebook Auto Post
 
 on:
   schedule:
-    - cron: '0 6 * * *'    # 08:00 Sofia ‚Äî ITA COM post
-    - cron: '0 7 * * *'    # 10:00 Sofia ‚Äî Instagram post
-    - cron: '0 9 * * *'    # 11:00 Sofia ‚Äî Partner news
-    - cron: '0 12 * * *'   # 14:00 Sofia ‚Äî ITA COM post
-    - cron: '0 16 * * *'   # 18:00 Sofia ‚Äî Partner news
-    - cron: '*/30 * * * *' # Every 30 min ‚Äî check & reply to comments
+    - cron: '0 6 * * 2'    # Tuesday   08:00 Sofia — ITA COM post
+    - cron: '0 6 * * 5'    # Friday    08:00 Sofia — ITA COM post
+    - cron: '0 7 * * 3'    # Wednesday 09:00 Sofia — Instagram post
+    - cron: '0 7 * * 6'    # Saturday  09:00 Sofia — Instagram post
+    - cron: '0 9 * * 1'    # Monday    11:00 Sofia — Partner news
+    - cron: '0 9 * * 4'    # Thursday  11:00 Sofia — Partner news
+    - cron: '*/30 * * * *' # Every 30 min — check & reply to comments
   workflow_dispatch:
     inputs:
       post_type:
@@ -56,15 +57,11 @@ jobs:
           SCHEDULE="${{ github.event.schedule }}"
           if [ -n "$INPUT" ]; then
             echo "type=$INPUT" >> $GITHUB_OUTPUT
-          elif [ "$SCHEDULE" = "0 6 * * *" ]; then
+          elif [ "$SCHEDULE" = "0 6 * * 2" ] || [ "$SCHEDULE" = "0 6 * * 5" ]; then
             echo "type=itacom" >> $GITHUB_OUTPUT
-          elif [ "$SCHEDULE" = "0 7 * * *" ]; then
+          elif [ "$SCHEDULE" = "0 7 * * 3" ] || [ "$SCHEDULE" = "0 7 * * 6" ]; then
             echo "type=instagram" >> $GITHUB_OUTPUT
-          elif [ "$SCHEDULE" = "0 9 * * *" ]; then
-            echo "type=partner" >> $GITHUB_OUTPUT
-          elif [ "$SCHEDULE" = "0 12 * * *" ]; then
-            echo "type=itacom" >> $GITHUB_OUTPUT
-          elif [ "$SCHEDULE" = "0 16 * * *" ]; then
+          elif [ "$SCHEDULE" = "0 9 * * 1" ] || [ "$SCHEDULE" = "0 9 * * 4" ]; then
             echo "type=partner" >> $GITHUB_OUTPUT
           else
             echo "type=comments" >> $GITHUB_OUTPUT
