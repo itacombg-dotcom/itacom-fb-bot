@@ -2,12 +2,6 @@ name: Facebook Auto Post
 
 on:
   schedule:
-    - cron: '0 6 * * 2'    # Tuesday   08:00 Sofia — ITA COM post
-    - cron: '0 6 * * 5'    # Friday    08:00 Sofia — ITA COM post
-    - cron: '0 7 * * 3'    # Wednesday 09:00 Sofia — Instagram post
-    - cron: '0 7 * * 6'    # Saturday  09:00 Sofia — Instagram post
-    - cron: '0 9 * * 1'    # Monday    11:00 Sofia — Partner news
-    - cron: '0 9 * * 4'    # Thursday  11:00 Sofia — Partner news
     - cron: '*/30 * * * *' # Every 30 min — check & reply to comments
   workflow_dispatch:
     inputs:
